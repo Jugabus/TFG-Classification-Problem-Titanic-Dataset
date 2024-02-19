@@ -1,0 +1,57 @@
+---
+title: "Analsisi Bidimensional TFG"
+output: word_document
+date: "2023-11-09"
+---
+
+
+pvalor<0.05
+
+Se rechaza la hipotesis nula, por tanto, Existe evidencia estadística para concluir que hay una asociacion significativa entre las variables categóricas
+
+Cualitativas
+
+
+SURVIVED
+```{r}
+chisq.test(table(data1$Survived,data1$Sex))
+chisq.test(table(data1$Survived,data1$Pclass))
+chisq.test(table(data1$Survived,data1$Embarked))
+chisq.test(table(data1$Survived,data1$Acomp))
+```
+
+PCLASS
+```{r}
+chisq.test(table(data1$Pclass,data1$Sex))
+chisq.test(table(data1$Pclass,data1$Embarked))
+chisq.test(table(data1$Pclass,data1$Acomp))
+```
+
+SEX
+```{r}
+chisq.test(table(data1$Sex,data1$Embarked))
+chisq.test(table(data1$Sex,data1$Acomp))
+```
+```{r}
+
+data1$Survived=as.factor(data1$Survived)
+data1$Pclass=as.factor(data1$Pclass)
+data1$Sex=as.factor(data1$Sex)
+data1$Embarked=as.factor(data1$Embarked)
+data1$Acomp=as.factor(data1$Acomp)
+
+
+
+# Tus variables categóricas son Survived, Pclass, Sex, Embarked y Acomp
+variables_categoricas <- c("Survived", "Pclass", "Sex", "Embarked", "Acomp")
+
+
+    # Crea la tabla de contingencia
+    tabla <- table(data1[[variables_categoricas[1]]], data1[[variables_categoricas[3]]])
+```
+
+
+```{r}
+library(vcd)
+assocstats(tabla)
+```

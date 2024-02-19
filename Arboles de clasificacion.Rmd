@@ -1,0 +1,343 @@
+---
+title: "Arboles de clasificacion"
+output: word_document
+date: "2023-11-18"
+---
+
+
+
+
+```{r}
+library(dplyr)
+
+library(ggplot2)
+library(C50) #TREE
+library(caret) #VALIDACION CRUZADA
+data=cleaned_data[,-c(7,8)]
+data <- rename(data, Fare = Fare_por_persona)
+```
+
+```{r}
+#FIJA LOS PARAMETROS DEL ALGORITMO
+tree <- C5.0(Survived~., data=data)
+tree
+```
+
+```{r}
+summary(tree)
+
+```
+
+
+ARBOL DIBUJADO
+
+```{r}
+plot(tree)
+```
+
+
+VALIDACION CRUZADA
+
+```{r}
+#Divide en 10 el dataset
+
+folds <- cut(seq(1,nrow(data)),breaks=10,labels=FALSE) # Crear 10 folds
+
+# Almacenar los resultados
+results <- vector(mode="list", length=10)
+
+# Bucle para entrenar y evaluar en cada fold
+for(i in 1:10){
+  # Indices para el conjunto de entrenamiento y prueba
+  testIndexes <- which(folds==i)
+  trainIndexes <- setdiff(1:nrow(data), testIndexes)
+  
+  # Crear los conjuntos de entrenamiento y prueba
+  train <- data[trainIndexes, ]
+  test <- data[testIndexes, ]
+  
+  # Entrenar el modelo
+  model <- C5.0(Survived~., data=train)
+  
+  # Evaluar el modelo
+  predictions <- predict(model, test)
+  results[[i]] <- table(pred=predictions, true=test$Survived)
+}
+
+# Calcular la precisión media
+accuracies <- sapply(results, function(cm) sum(diag(cm))/sum(cm))
+mean_accuracy <- mean(accuracies)
+mean_accuracy2= sum(accuracies)/length(accuracies)
+
+
+print(paste("La precisión media es del", mean_accuracy*100,"%"))
+```
+
+
+REGLAS
+
+```{r}
+tree_rules <- C5.0(Survived~., data=data, rules = TRUE)
+tree_rules
+```
+
+```{r}
+summary(tree_rules)
+```
+
+
+
+
+
+
+```{r}
+param2=C5.0Control(CF =0.50, minCases = 2)
+tree2 <- C5.0(Survived~., data=data, control=param2)
+tree2
+```
+
+
+```{r}
+summary(tree2)
+```
+
+```{r}
+plot(tree2)
+```
+
+VALIDACION CRUZADA
+
+```{r}
+#Divide en 10 el dataset
+
+folds <- cut(seq(1,nrow(data)),breaks=10,labels=FALSE) # Crear 10 folds
+
+# Almacenar los resultados
+results <- vector(mode="list", length=10)
+
+# Bucle para entrenar y evaluar en cada fold
+for(i in 1:10){
+  # Indices para el conjunto de entrenamiento y prueba
+  testIndexes <- which(folds==i)
+  trainIndexes <- setdiff(1:nrow(data), testIndexes)
+  
+  # Crear los conjuntos de entrenamiento y prueba
+  train <- data[trainIndexes, ]
+  test <- data[testIndexes, ]
+  
+  # Entrenar el modelo
+  model <- C5.0(Survived~., data=train, control=param2)
+  
+  # Evaluar el modelo
+  predictions <- predict(model, test)
+  results[[i]] <- table(pred=predictions, true=test$Survived)
+}
+
+# Calcular la precisión media
+accuracies <- sapply(results, function(cm) sum(diag(cm))/sum(cm))
+mean_accuracy <- mean(accuracies)
+mean_accuracy2= sum(accuracies)/length(accuracies)
+
+
+print(paste("La precisión media es del", mean_accuracy*100,"%"))
+sd(accuracies)
+```
+
+
+
+REGLAS
+
+```{r}
+tree_rules2 <- C5.0(Survived~., data=data, control=param2, rules = TRUE)
+tree_rules2
+```
+
+```{r}
+summary(tree_rules2)
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+param3=C5.0Control(CF =1, minCases = 12)
+tree3 <- C5.0(Survived~., data=data, control=param3)
+tree3
+```
+
+
+```{r}
+summary(tree3)
+```
+
+```{r}
+plot(tree3)
+```
+
+VALIDACION CRUZADA
+
+```{r}
+#Divide en 10 el dataset
+
+folds <- cut(seq(1,nrow(data)),breaks=10,labels=FALSE) # Crear 10 folds
+
+# Almacenar los resultados
+results <- vector(mode="list", length=10)
+
+# Bucle para entrenar y evaluar en cada fold
+for(i in 1:10){
+  # Indices para el conjunto de entrenamiento y prueba
+  testIndexes <- which(folds==i)
+  trainIndexes <- setdiff(1:nrow(data), testIndexes)
+  
+  # Crear los conjuntos de entrenamiento y prueba
+  train <- data[trainIndexes, ]
+  test <- data[testIndexes, ]
+  
+  # Entrenar el modelo
+  model <- C5.0(Survived~., data=train, control=param3)
+  
+  # Evaluar el modelo
+  predictions <- predict(model, test)
+  results[[i]] <- table(pred=predictions, true=test$Survived)
+}
+
+# Calcular la precisión media
+accuracies <- sapply(results, function(cm) sum(diag(cm))/sum(cm))
+mean_accuracy <- mean(accuracies)
+mean_accuracy2= sum(accuracies)/length(accuracies)
+
+
+print(paste("La precisión media es del", mean_accuracy*100,"%"))
+```
+
+
+
+REGLAS
+
+```{r}
+tree_rules3 <- C5.0(Survived~., data=data, control=param3, rules = TRUE)
+tree_rules3
+```
+
+```{r}
+summary(tree_rules3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+param4=C5.0Control(CF =0.4, minCases = 10)
+tree4 <- C5.0(Survived~., data=data, control=param4)
+tree4
+```
+
+
+```{r}
+summary(tree4)
+```
+
+```{r}
+plot(tree4)
+```
+
+VALIDACION CRUZADA
+
+```{r}
+#Divide en 10 el dataset
+
+folds <- cut(seq(1,nrow(data)),breaks=10,labels=FALSE) # Crear 10 folds
+
+# Almacenar los resultados
+results <- vector(mode="list", length=10)
+
+# Bucle para entrenar y evaluar en cada fold
+for(i in 1:10){
+  # Indices para el conjunto de entrenamiento y prueba
+  testIndexes <- which(folds==i)
+  trainIndexes <- setdiff(1:nrow(data), testIndexes)
+  
+  # Crear los conjuntos de entrenamiento y prueba
+  train <- data[trainIndexes, ]
+  test <- data[testIndexes, ]
+  
+  # Entrenar el modelo
+  model <- C5.0(Survived~., data=train, control=param4)
+  
+  # Evaluar el modelo
+  predictions <- predict(model, test)
+  results[[i]] <- table(pred=predictions, true=test$Survived)
+}
+
+# Calcular la precisión media
+accuracies <- sapply(results, function(cm) sum(diag(cm))/sum(cm))
+mean_accuracy <- mean(accuracies)
+mean_accuracy2= sum(accuracies)/length(accuracies)
+
+
+print(paste("La precisión media es del", mean_accuracy*100,"%"))
+
+sd(accuracies)
+```
+
+
+
+REGLAS
+
+```{r}
+tree_rules4 <- C5.0(Survived~., data=data, control=param4, rules = TRUE)
+tree_rules4
+```
+
+```{r}
+summary(tree_rules4)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+```
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,246 @@
+---
+title: "REGLAS DE ASOCIACION"
+output: word_document
+date: "2023-11-13"
+---
+
+```{r}
+library(tidyverse)
+library(Matrix)
+library(arules)
+library(arulesViz)
+library(Hmisc)
+library(lattice)
+library(survival)
+library(Formula)
+```
+
+Discretizacion de FARE KMEANS
+
+
+
+
+```{r}
+FareKmeans <- discretize(cleaned_data$Fare_por_persona, method = "cluster", breaks = 3)
+table(data1[which(FareKmeans=="[0,9.81)"),]$Pclass)
+table(data1[which(FareKmeans=="[9.81,20.7)"),]$Pclass)
+table(data1[which(FareKmeans=="[20.7,29.7]"),]$Pclass)
+
+table(FareKmeans)
+```
+
+
+
+```{r}
+cleaned_data$FareDis <- cut(cleaned_data$Fare_por_persona, breaks = c(0, 9.9, 20.7, Inf), right = FALSE, labels = c("3", "2", "1"))
+
+table(data1[which(cleaned_data$FareDis=="3"),]$Pclass)
+table(data1[which(cleaned_data$FareDis=="2"),]$Pclass)
+table(data1[which(cleaned_data$FareDis=="1"),]$Pclass)
+```
+
+
+Discretizacion de Age
+
+
+manual
+
+```{r}
+cleaned_data$AgeDis <- cut(cleaned_data$Age, breaks = c(0, 18,30, Inf), right = FALSE, labels = c("Niño", "Joven", "Adulto"))
+
+table(cleaned_data$AgeDis)
+
+```
+
+
+
+Kmeans
+
+```{r}
+
+AgeKmeans <- discretize(cleaned_data$Age, method = "cluster", breaks = 2)
+table(AgeKmeans)
+
+```
+
+
+```{r}
+set.seed(123)
+
+# Extrae la columna de edad
+age_data <- cleaned_data$Age
+
+# Calcula el total de la suma de cuadrados dentro del grupo para diferentes números de clusters
+wss <- sapply(1:10, function(k) {
+  kmeans(age_data, centers = k, nstart = 50)$tot.withinss
+})
+
+# Crea el gráfico de codo
+plot(1:10, wss, type = "b", xlab = "Número de clusters", ylab = "Suma total de cuadrados dentro del grupo",
+     main = "Gráfico de codo para Age")
+```
+
+
+
+
+Para ejecutar el algoritmo Apriori necesitamos convertir nuestra tabla a formato transaccional.
+
+QUITAR AGE Y FARE SIN DISCRETIZAR
+
+```{r}
+data_rule=cleaned_data[,-c(3,5)]
+names(data_rule)
+```
+
+
+```{r}
+data_rule <- data.frame(lapply(data_rule, function(x) as.factor(x)))
+```
+
+Y, a continuación, convertir a “transactions” con la funcion as():
+
+
+```{r}
+datat <- as(data_rule, "transactions")
+head(datat)
+
+```
+
+
+Frecuencias de los items
+
+```{r}
+itemFrequencyPlot(datat, type="relative", main="Recuento de items")
+
+```
+
+```{r}
+length(which(cleaned_data$AgeDis=="Niño"))/length(cleaned_data$AgeDis)
+length(which(cleaned_data$Embarked=="Q"))/length(cleaned_data$AgeDis)
+
+```
+
+
+
+
+
+ITEMSETS FRECUENTES SEGUN UN SOPORTE MINIMO
+```{r, include=FALSE}
+itemsetsFrecuentes <- apriori(datat, parameter = list(support = 0.08, target = "frequent itemsets"))
+```
+
+Lo visualizamos en una tabla 
+```{r,include=FALSE}
+inspect(itemsetsFrecuentes)
+
+```
+
+Sacamos las reglas con cierto soporte y confianza
+
+```{r, include=FALSE}
+reglas1 <- apriori(datat,
+parameter = list(support = 0.08,
+confidence = 0.7,
+target = "rules",
+minlen = 2,
+maxlen = 3))
+
+```
+
+
+Resumen algoritmo
+```{r}
+summary(reglas1)
+```
+
+
+SOPORTE DECRECIENTE
+
+```{r,include=FALSE}
+reglas1_soporte <- sort(reglas1, by = "support", decreasing = TRUE)
+inspect(reglas1_soporte)
+```
+
+
+CONFIANZA DECRECIENTE
+
+```{r,include=FALSE}
+reglas1_confidence <- sort(reglas1, by = "confidence", decreasing = TRUE)
+inspect(reglas1_confidence)
+
+```
+
+
+LIFT DECRECIENTE
+
+```{r,include=FALSE}
+reglas1_lift <- sort(reglas1, by = "lift", decreasing = TRUE)
+inspect(reglas1_lift)
+
+```
+
+
+
+Consecuentes Survived
+
+
+```{r,include=FALSE}
+SurvReglas <- subset(reglas1, rhs %pin% "Survived")
+inspect(SurvReglas)
+```
+
+
+
+ANTECEDENTES
+
+```{r,include=FALSE}
+FareReglas <- subset(reglas1, lhs %pin% "FareDis")
+inspect(FareReglas)
+```
+
+
+```{r,include=FALSE}
+AgeReglas <- subset(reglas1, lhs %pin% "AgeDis")
+inspect(AgeReglas)
+```
+
+```{r,include=FALSE}
+EmbarkedReglas <- subset(reglas1, lhs %pin% "Embarked")
+inspect(EmbarkedReglas)
+```
+
+```{r,include=FALSE}
+AcompReglas <- subset(reglas1, lhs %pin% "Acomp")
+inspect(AcompReglas)
+```
+
+```{r,include=FALSE}
+SexReglas <- subset(reglas1, lhs %pin% "Sex=femenino")
+inspect(SexReglas)
+```
+
+
+LHS= y RHS=  SIMULTANEAMENTE
+
+```{r,include=FALSE}
+reglas_con_A <- subset(reglas1, lhs %pin% "FareDis=2")
+
+reglas_con_A_y_B <- subset(reglas_con_A, rhs %pin% "Survived=No")
+inspect(reglas_con_A_y_B)
+````
+
+
+```{r,include=FALSE}
+reglasAnc <- apriori(datat,
+parameter = list(support = 0.01,
+confidence = 0.7,
+target = "rules",
+minlen = 2,
+maxlen = 3))
+
+AgeReglas <- subset(reglasAnc, lhs %pin% "AgeDis=Niño")
+inspect(AgeReglas)
+```
+
+
+

@@ -1,0 +1,370 @@
+---
+title: "TFG"
+author: "Julio Garcia Bustos"
+date: "2023-06-08"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+FIJA DIRECTORIO Y CARGA LIBRERIAS
+```{r}
+setwd("C:/Users/jugab/OneDrive/Escritorio/TFG PRACTICA/Titanic")
+
+
+library(ggplot2)
+library(dplyr)
+library(cowplot)     # Para unir gráficos generados con ggplot2
+library(viridis)     # Para paletas de colores
+library(hrbrthemes)
+library(Matrix)
+```
+
+
+LEE LOS DATASETS LOS UNE Y LOS ORDENA CORRECTAMENTE
+```{r}
+train= read.csv("train.csv",header=TRUE, na.strings = c("", "NA", ",,")) 
+test=read.csv("test.csv",header=TRUE, na.strings = c("", "NA", ",,")) 
+gender=read.csv("gender_submission.csv",header=TRUE, na.strings = c("", "NA", ",,")) 
+
+test_gender<- merge(test, gender, by = "PassengerId", all.x = TRUE)
+
+testgenderorden <- test_gender[, c(1,12,2:11)]  #Reordena las variables como en train.csv
+
+data1=rbind(train,testgenderorden)
+
+attach(data1)
+
+
+```
+
+
+
+
+```{r}
+length(names(data1)) #numero de variables
+n=length(data1$Survived) #numero de observaciones
+n
+```
+
+DATOS FALTANTES NUMERO Y PROPORCION PARA CADA VARIABLE
+```{r}
+sapply(data1, function(x) sum(is.na(x))) #Ver datos faltantes 
+#de cada variable
+
+#PROPORCION
+missing_values <- colMeans(is.na(data1)) * 100
+missing_values
+```
+Se observan 263 datos faltantes en la variable Edad, 1014 en la de Cabina y 2 en la variable de Embarque. Debido a que el 77.46% de los datos de la variable Cabin son faltante, se va a prescindir de esta.
+
+
+
+
+RESUMEN DEL DATASET COMPLETO
+```{r}
+summary(data1)
+```
+
+
+
+
+Leemos los datos de nuevo para asegurar que los tenemos intactos
+
+```{r}
+train= read.csv("train.csv",header=TRUE, na.strings = c("", "NA", ",,")) 
+test=read.csv("test.csv",header=TRUE, na.strings = c("", "NA", ",,")) 
+gender=read.csv("gender_submission.csv",header=TRUE, na.strings = c("", "NA", ",,")) 
+
+test_gender<- merge(test, gender, by = "PassengerId", all.x = TRUE)
+
+testgenderorden <- test_gender[, c(1,12,2:11)]  #Reordena las variables como en train.csv
+
+data1=rbind(train,testgenderorden)
+
+
+shapiro.test(data1$Age) #Test de normalidad
+```
+
+
+TRANSFORMACION A DINERO PAGADO POR PASAJERO DE FARE
+
+
+```{r}
+# Calcula la cantidad de pasajeros por ticket
+cantidad_pasajeros <- as.numeric(table(data1$Ticket)[data1$Ticket])
+
+# Crea una nueva variable 'Fare_por_persona'
+data1$Fare_por_persona <- data1$Fare / cantidad_pasajeros
+
+
+data1$Fare_por_persona=as.numeric(data1$Fare_por_persona)
+
+```
+
+
+Quitamos variables no necesarias 
+```{r}
+data1=data1[,-c(1,4,9,11)]
+```
+
+
+
+IMPUTACION FALTANTES EMBARKED
+
+```{r}
+
+# Imputa los valores faltantes con la moda
+data1$Embarked[is.na(data1$Embarked)] <- "S"
+sum(is.na(data1$Embarked))
+
+```
+
+
+
+Imputamos faltantes AGE
+
+
+```{r}
+mediana_edad <- aggregate ( Age ~ Pclass , data = data1 , FUN = median)
+
+mean_edad <- aggregate ( Age ~ Pclass , data = data1 , FUN = mean)
+                         
+                         mediana_edad
+mean_edad
+```
+
+
+
+Imputa los datos faltantes de la variable Edad en funcion de la clase social de cada pasajero. Para los de clase 1 le imputamos la media de la edad ya que no contiene valores extremos y para las demas clases con la mediana ya que si contienen.
+
+```{r}
+impute_age <- function(cols) {
+  Age <- cols[1]
+  Pclass <- cols[2]
+  
+  if (is.na(Age)) {
+    if (Pclass == 1) {
+      return(39.15993)
+    } else if (Pclass == 2) {
+      return(29)
+    } else {
+      return(24)
+    }
+  } else {
+    return(Age)
+  }
+}
+
+data1$Age <- apply(data1[, c("Age", "Pclass")], 1, impute_age)
+
+shapiro.test(data1$Age) #NO NORMAL
+
+```
+
+
+#OUTLIERS AGE 
+
+```{r}
+boxplot.stats(data1$Age)
+```
+
+
+
+
+
+
+
+OUTLIERS FARE
+
+
+
+
+
+```{r}
+boxplot.stats(data1$Fare_por_persona)
+```
+
+```{r}
+q3=quantile(data1$Fare_por_persona,na.rm = TRUE)[4]
+iqr=IQR(data1$Fare_por_persona,na.rm = TRUE)
+
+limExtr=q3+3*iqr
+limleve=q3+1.5*iqr
+
+numExtr=length(which(data1$Fare_por_persona>limExtr))
+numLev=length(which(data1$Fare_por_persona>limleve))
+```
+
+```{r}
+dataOUT=data1[which(data1$Fare_por_persona>26.00000),]
+summary(dataOUT)
+```
+
+SON TODOS DE CLASE 1 LOS OUTLIERS
+
+IMPUTACION FARE
+
+```{r}
+mediana_edad <- aggregate ( Fare_por_persona ~ Pclass , data = data1 , FUN = median)
+
+mean_edad <- aggregate ( Fare_por_persona ~ Pclass , data = data1 , FUN = mean)
+                         
+mediana_edad
+mean_edad
+```
+Transformamos los outliers en na
+```{r}
+data1$Fare_por_persona[data1$Fare_por_persona > 26   ] <- NA
+```
+
+
+Imputamos dichos na
+```{r}
+impute_fare <- function(cols) {
+  Fare_por_persona <- cols[1]
+  Pclass <- cols[2]
+  
+  if (is.na(Fare_por_persona)) {
+    if (Pclass == 1) {
+      return(29.7)
+    } else if (Pclass == 2) {
+      return(12.35)
+    } else {
+      return(7.75)
+    }
+  } else {
+    return(Fare_por_persona)
+  }
+}
+
+data1$Fare_por_persona <- apply(data1[, c("Fare_por_persona", "Pclass")], 1, impute_fare)
+
+```
+
+
+```{r}
+boxplot.stats(data1$Fare_por_persona)
+```
+
+
+
+
+
+Visualizar datos faltantes
+
+```{r}
+library(naniar)
+vis_miss(data1)
+
+```
+
+
+
+#TRANSFORMACION DE VARIABLES SIBSP y PARCH en Acomp (0 solo, 1 acompanado)
+
+```{r}
+data1$Acomp <- ifelse((data1$SibSp + data1$Parch) > 0, 1, 0)
+
+table(data1$Acomp)
+```
+
+```{r}
+data1=as.data.frame(data1)
+summary(data1)
+```
+
+COEFICIENTES DE CORRELACION
+
+AGE Y FARE IMPUTADO
+```{r}
+cor(data1$Age,data1$Fare_por_persona, method = 'pearson')
+```
+
+Solo valores NA AGE imputados
+
+```{r}
+data3=rbind(train,testgenderorden)
+cantidad_pasajeros <- as.numeric(table(data3$Ticket)[data3$Ticket])
+data3$Fare_por_persona <- data3$Fare / cantidad_pasajeros
+data3$Fare_por_persona=as.numeric(data3$Fare_por_persona)
+data3=data3[,-c(1,4,9,11)]
+
+data3$Age <- apply(data3[, c("Age", "Pclass")], 1, impute_age)
+
+
+data3=na.omit(data3)
+dim(data3)
+cor(data3$Age,data3$Fare_por_persona, method = 'pearson')
+```
+
+
+
+Sin imputar
+```{r}
+data2=rbind(train,testgenderorden)
+cantidad_pasajeros <- as.numeric(table(data2$Ticket)[data2$Ticket])
+data2$Fare_por_persona <- data2$Fare / cantidad_pasajeros
+data2$Fare_por_persona=as.numeric(data2$Fare_por_persona)
+data2=data2[,-c(1,4,9,11)]
+
+
+data2=na.omit(data2)
+dim(data2)
+cor(data2$Age,data2$Fare_por_persona, method = 'pearson')
+
+```
+
+Solo imputando Fare outliers
+
+```{r}
+data4=rbind(train,testgenderorden)
+cantidad_pasajeros <- as.numeric(table(data4$Ticket)[data4$Ticket])
+data4$Fare_por_persona <- data4$Fare / cantidad_pasajeros
+data4$Fare_por_persona=as.numeric(data4$Fare_por_persona)
+data4=data4[,-c(1,4,9,11)]
+
+data4$Fare_por_persona[data4$Fare_por_persona > 26   ] <- NA
+
+data4$Fare_por_persona <- apply(data4[, c("Fare_por_persona", "Pclass")], 1, impute_fare)
+
+data4=na.omit(data4)
+
+dim(data4)
+cor(data4$Age,data4$Fare_por_persona, method = 'pearson')
+
+```
+CONJUNTO FINAL QUITAMOS VARIABLES NO NECESARIAS
+
+```{r}
+cleaned_data=data1[,-c(2,5,6,7)]
+
+# Survived
+cleaned_data <- cleaned_data %>%
+mutate(Survived = ifelse(Survived == 0, "No", "Si"))
+
+
+# Sex
+cleaned_data <- cleaned_data %>%
+mutate(Sex = ifelse(Sex == "female", "femenino", "masculino"))
+
+
+# Acomp
+cleaned_data <- cleaned_data %>%
+mutate(Acomp = ifelse(Acomp == 0, "No", "Si"))
+
+cleaned_data$Survived=as.factor(cleaned_data$Survived)
+
+cleaned_data$Sex=as.factor(cleaned_data$Sex)
+
+cleaned_data$Acomp=as.factor(cleaned_data$Acomp)
+
+cleaned_data$Embarked=as.factor(cleaned_data$Embarked)
+
+```
+
+```{r}
+dim(cleaned_data)
+summary(cleaned_data)
+```
+

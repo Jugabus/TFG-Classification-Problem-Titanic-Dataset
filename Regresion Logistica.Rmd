@@ -1,0 +1,151 @@
+---
+title: "Regresión logística"
+output: word_document
+date: "2023-11-22"
+---
+
+```{r}
+data=data=cleaned_data[,-c(7,8)]
+str(data)
+data <- rename(data, Fare = Fare_por_persona)
+#data$Fare=scale(data$Fare)
+#data$Age=scale(data$Age)
+```
+
+
+```{r}
+RL=glm(Survived ~.,family="binomial" , data=data)
+
+```
+
+```{r}
+summary(RL)
+summary(RL$residuals)
+```
+VALIDACION CRUZADA
+
+```{r}
+#Divide en 10 el dataset
+
+folds <- cut(seq(1,nrow(data)),breaks=10,labels=FALSE) # Crear 10 folds
+
+# Almacenar los resultados
+results <- vector(mode="list", length=10)
+
+# Bucle para entrenar y evaluar en cada fold
+for(i in 1:10){
+  # Indices para el conjunto de entrenamiento y prueba
+  testIndexes <- which(folds==i)
+  trainIndexes <- setdiff(1:nrow(data), testIndexes)
+  
+  # Crear los conjuntos de entrenamiento y prueba
+  train <- data[trainIndexes, ]
+  test <- data[testIndexes, ]
+  
+  # Entrenar el modelo
+  GLM <- glm(Survived ~.,family="binomial", data=data)
+  
+  # Evaluar el modelo
+  predictions0 <- predict(GLM, test, type="response")
+
+  predictions1<- ifelse(predictions0 > 0.5, "Si", "No")
+
+  predictions <- as.factor(as.character(predictions1))
+
+  
+  results[[i]] <- table(pred=predictions, true=test$Survived)
+}
+
+# Calcular la precisión media
+accuracies <- sapply(results, function(cm) sum(diag(cm))/sum(cm))
+mean_accuracy <- mean(accuracies)
+mean_accuracy2= sum(accuracies)/length(accuracies)
+
+
+print(paste("La precisión media es del", mean_accuracy*100,"%"))
+sd(accuracies)
+```
+
+
+
+
+```{r}
+data=data=cleaned_data[,-c(7,8)]
+
+data$Fare_por_persona=scale(data$Fare_por_persona)
+data$Age=scale(data$Age)
+RL2=glm(Survived ~ Sex+Age+Fare_por_persona, family="binomial" , data=data)
+summary(RL2)
+```
+
+
+```{r}
+#Divide en 10 el dataset
+
+folds <- cut(seq(1,nrow(data)),breaks=10,labels=FALSE) # Crear 10 folds
+
+# Almacenar los resultados
+results <- vector(mode="list", length=10)
+
+# Bucle para entrenar y evaluar en cada fold
+for(i in 1:10){
+  # Indices para el conjunto de entrenamiento y prueba
+  testIndexes <- which(folds==i)
+  trainIndexes <- setdiff(1:nrow(data), testIndexes)
+  
+  # Crear los conjuntos de entrenamiento y prueba
+  train <- data[trainIndexes, ]
+  test <- data[testIndexes, ]
+  
+  # Entrenar el modelo
+  GLM <- glm(Survived ~Sex+Age+Fare, family="binomial", data=data)
+  
+  # Evaluar el modelo
+  predictions0 <- predict(GLM, test, type="response")
+
+  predictions1<- ifelse(predictions0 > 0.5, "Si", "No")
+
+  predictions <- as.factor(as.character(predictions1))
+
+  
+  results[[i]] <- table(pred=predictions, true=test$Survived)
+}
+
+# Calcular la precisión media
+accuracies <- sapply(results, function(cm) sum(diag(cm))/sum(cm))
+mean_accuracy <- mean(accuracies)
+mean_accuracy2= sum(accuracies)/length(accuracies)
+
+
+print(paste("La precisión media es del", mean_accuracy*100,"%"))
+sd(accuracies)
+```
+
+```{r}
+data=data=cleaned_data[,-c(7,8)]
+#data$Fare=scale(data$Fare)
+#data$Age=scale(data$Age)
+RL3=glm(Survived ~ Sex+Age+Fare, family="binomial" , data=data)
+summary(RL3)
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```

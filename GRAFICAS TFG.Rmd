@@ -1,0 +1,433 @@
+---
+title: "GRAFICAS TFG"
+output: word_document
+date: "2023-10-18"
+---
+
+GRAFICOS DE BARRAS
+
+Survived
+```{r}
+porcentajes=prop.table(table(data1$Survived)) * 100
+colores <- c("lightblue", "salmon")
+barplot(table(data1$Survived), col = colores, main = "Gráfico de Barras de Survived")
+
+
+
+```
+
+Pclass
+```{r}
+barplot(table(data1$Pclass))
+```
+
+Sex
+```{r}
+barplot(table(data1$Sex))
+```
+
+Age (Contiene valores que no son discretos)
+```{r}
+hist(Age)
+```
+
+SibSp
+```{r}
+barplot(table(data1$SibSp),col="lightblue")
+```
+
+Parch
+```{r}
+barplot(table(data1$Parch),col="lightblue")
+```
+
+
+Fare
+
+```{r}
+hist(data1$Fare,xlab ="Tarifa o precio del pasaje que el pasajero pagó")
+boxplot(data1$Fare, main = "Diagrama de caja y bigotes", ylab = "Tarifa o precio del pasaje que el pasajero pagó")
+```
+```{r}
+summary(data1$Fare)
+```
+
+Embarked
+```{r}
+barplot(table(Embarked))
+```
+
+NUMERO DE HOMBRES Y MUJERES QUE SOBREVIVIERON (Y QUE NO)
+
+```{r}
+conteo1 <- table(data1$Sex, data1$Survived)
+```
+
+Porcentaje 
+```{r}
+porcentajes <- prop.table(conteo1, margin = 2) * 100
+porcentajes
+```
+
+Diagrama de barras de los que sobrevivieron en funcion del sexo.
+
+```{r}
+# Colores para las barras
+colores <- c("salmon", "dodgerblue")
+
+# Crear el diagrama de barras con colores según el sexo
+barplot(conteo1, main = "Diagrama de barras - Survived por Sexo",
+        xlab = "Sobrevivió", ylab = "Frecuencia",
+        legend = c("Mujer", "Hombre"),
+        col = colores)
+
+```
+
+Diagrama de barras de supervivientes
+```{r}
+
+data1$Survived <- factor(data1$Survived)
+
+theme_set(theme_minimal())
+
+# Crear el gráfico de barras
+ggplot(data1, aes(x = Survived, fill = Survived)) +
+  geom_bar() +
+  labs(title = "Gráfico de Barras de Survived",
+       x = "Survived",
+       y = "Count") +
+  scale_fill_manual(values = c("lightgreen", "salmon"))
+```
+
+
+Supervivientes en funcion del sexo
+```{r}
+
+ggplot(data1, aes(Survived)) + geom_bar(aes(fill = Sex), position = "dodge")
+
+```
+
+Supervivientes en funcion de la clase social.
+
+```{r}
+data1$Pclass <- factor(data1$Pclass)
+ggplot(data1, aes(Survived)) +
+  geom_bar(aes(fill = Pclass), position = "dodge") +
+  labs(x = "Survived", y = "Count") +
+  theme_minimal() +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.line = element_line(color = "black"),
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.title = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 10),
+    legend.text = element_text(size = 10)
+  )
+
+```
+
+
+Boxplot de la edad en funcion de la clase social.
+
+```{r}
+
+data1$Pclass <- as.factor(data1$Pclass)
+
+
+ggplot(data1, aes(x = Pclass, y = Age, fill = Pclass )) +
+  geom_boxplot(color = "black") +
+  labs(x = "Pclass", y = "Age")  +
+  scale_fill_manual(values = c("lightblue", "lightgreen", "lightpink")) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text = element_text(size = 10))
+```
+
+Se observa una mayor variabilidad interclase que entre las demás variables. También se puede comentar que en la clase 1 (baja) hay una mayor variabilidad de edad y la media y mediana es mayor que las demás, es decir, parecen tener una edad mayor lo de primera clase. La tercera clase es la de menor edad en media pero no difiere mucho de la segunda.
+
+
+
+```{r}
+
+
+data1$Embarked <- as.factor(data1$Embarked)
+
+ggplot(data1, aes(x = Embarked, y = Age, fill = Embarked )) +
+  geom_boxplot(color = "black") +
+  labs(x = "Embarked", y = "Age") +
+  
+  scale_fill_manual(values = c("lightblue", "lightgreen", "lightpink")) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text = element_text(size = 10))
+```
+
+Boxplot de edad en funcion del sexo
+```{r}
+data1$Sex <- as.factor(data1$Sex)
+
+ggplot(data1, aes(x = Sex, y = Age, fill = Sex )) +
+  geom_boxplot(color = "black") +
+  labs(x = "Sex", y = "Age") +
+  scale_fill_manual(values = c("lightgreen", "lightpink")) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text = element_text(size = 10))
+```
+
+
+Boxplot de Age en funcion de si sobrevivio o no 
+```{r}
+data1$Survived <- as.factor(data1$Survived)
+
+ggplot(data1, aes(x = Survived, y = Age, fill = Survived )) +
+  geom_boxplot(color = "black") +
+  labs(x = "Survived", y = "Age") +
+  scale_fill_manual(values = c("lightgreen", "lightpink")) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text = element_text(size = 10))
+```
+
+
+
+```{r}
+
+data1$Pclass <- as.factor(data1$Pclass)
+
+
+
+
+ggplot(data1, aes(x = Pclass, y = Fare_por_persona, fill = Pclass )) +
+  geom_boxplot(color = "black") +
+  labs(x = "Pclass", y = "Fare_por_persona")  +
+  scale_fill_manual(values = c("lightblue", "lightgreen", "lightpink")) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text = element_text(size = 10))
+
+
+```
+
+Se observa una mayor variabilidad interclase que entre las demás variables. También se puede comentar que en la clase 1 (baja) hay una mayor variabilidad de edad y la media y mediana es mayor que las demás, es decir, parecen tener una edad mayor lo de primera clase. La tercera clase es la de menor edad en media pero no difiere mucho de la segunda.
+
+
+
+```{r}
+data1$Embarked <- as.factor(data1$Embarked)
+
+ggplot(data1, aes(x = Embarked, y = Fare_por_persona, fill = Embarked )) +
+  geom_boxplot(color = "black") +
+  labs(x = "Embarked", y = "Fare_por_persona") +
+  
+  scale_fill_manual(values = c("lightblue", "lightgreen", "lightpink")) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text = element_text(size = 10))
+```
+
+Boxplot de edad en funcion del sexo
+```{r}
+data1$Sex <- as.factor(data1$Sex)
+
+ggplot(data1, aes(x = Sex, y = Fare_por_persona, fill = Sex )) +
+  geom_boxplot(color = "black") +
+  labs(x = "Sex", y = "Fare_por_persona") +
+  scale_fill_manual(values = c("lightgreen", "lightpink")) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text = element_text(size = 10))
+```
+
+
+Boxplot de Edad en funcion de si sobrevivio o no 
+```{r}
+data1$Survived <- as.factor(data1$Survived)
+
+ggplot(data1, aes(x = Survived, y = Fare_por_persona, fill = Survived )) +
+  geom_boxplot(color = "black") +
+  labs(x = "Survived", y = "Fare_por_persona") +
+  scale_fill_manual(values = c("lightgreen", "lightpink")) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text = element_text(size = 10))
+```
+
+
+
+
+
+
+SURVIVED
+
+```{r}
+library(ggplot2)
+library(viridis)     # Para paletas de colores
+
+data$Survived=as.factor(data$Survived)
+   
+
+theme_set(theme_minimal())
+
+# Crear el gráfico de barras
+ggplot(data, aes(x = Survived, fill = Survived)) +
+  geom_bar() +
+  labs(title = "Gráfico de Barras de Survived",
+       x = "Survived",
+       y = "Count") +
+  scale_fill_manual(values = c("lightgreen", "salmon"))
+```
+
+```{r}
+data$Pclass=as.factor(data$Pclass)
+   
+
+theme_set(theme_minimal())
+
+# Crear el gráfico de barras
+ggplot(data, aes(x = Pclass, fill = Pclass)) +
+  geom_bar() +
+  labs(title = "Gráfico de Barras de Pclass",
+       x = "Pclass",
+       y = "Count") +
+  scale_fill_manual(values = c("lightgreen", "salmon", "lightblue"))
+```
+
+```{r}
+data$Sex=as.factor(data$Sex)
+   
+
+theme_set(theme_minimal())
+
+# Crear el gráfico de barras
+ggplot(data, aes(x = Sex, fill = Sex)) +
+  geom_bar() +
+  labs(title = "Gráfico de Barras de Sex",
+       x = "Sex",
+       y = "Count") +
+  scale_fill_manual(values = c("salmon", "lightblue"))
+```
+
+```{r}
+data$Embarked=as.factor(data$Embarked)
+   
+
+theme_set(theme_minimal())
+
+# Crear el gráfico de barras
+ggplot(data, aes(x = Embarked, fill = Embarked)) +
+  geom_bar() +
+  labs(title = "Gráfico de Barras de Embarked",
+       x = "Embarked",
+       y = "Count") +
+  scale_fill_manual(values = c("lightgreen", "salmon", "lightblue"))
+```
+
+```{r}
+data$SibSp <- as.factor(data$SibSp)
+
+theme_set(theme_minimal())
+
+# Crear el gráfico de barras
+ggplot(data, aes(x = SibSp, fill = "SibSp")) +
+  geom_bar() +
+  labs(title = "Gráfico de Barras de SibSp",
+       x = "SibSp",
+       y = "Count") +
+  scale_fill_manual(values = "lightblue")
+```
+
+```{r}
+data$Parch <- as.factor(data$Parch)
+
+theme_set(theme_minimal())
+
+# Crear el gráfico de barras
+ggplot(data, aes(x = Parch, fill = "Parch")) +
+  geom_bar() +
+  labs(title = "Gráfico de Barras de Parch",
+       x = "Parch",
+       y = "Count") +
+  scale_fill_manual(values = "lightblue")
+
+```
+
+```{r}
+ggplot(data) +
+  geom_boxplot(aes(x = "", y = Age), fill = "lightblue", color = "black") +
+  labs(title = "Boxplot de Age",
+       x = "",
+       y = "Age") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(data) +
+  geom_boxplot(aes(x = "", y = Fare), fill = "lightgreen", color = "black") +
+  labs(title = "Boxplot de Fare",
+       x = "",
+       y = "Fare") +
+  theme_minimal()
+```
+
+```{r}
+# Crear el histograma de Age
+ggplot(data, aes(x = Age)) +
+  geom_histogram(binwidth = 5, fill = "lightblue", color = "black") +
+  labs(title = "Histograma de Age",
+       x = "Age",
+       y = "Count") +
+  theme_minimal()
+```
+
+```{r}
+# Crear el histograma de Fare
+ggplot(data, aes(x = Fare)) +
+  geom_histogram(binwidth = 10, fill = "lightgreen", color = "black") +
+  labs(title = "Histograma de Fare",
+       x = "Fare",
+       y = "Count") +
+  theme_minimal()
+```
+
+
+```{r}
+
+# Histograma para Age
+hist(data1$Age, col = "lightblue", main = "Histograma de Age", xlab = "Age")
+```
+
+
+```{r}
+# Boxplot para Age
+boxplot(data1$Age, col = "lightgreen")
+```
+
+```{r}
+# Histograma para Fare
+hist(data1$Fare_por_persona, col = "lightblue", main = "Histograma de Fare", xlab = "Fare")
+```
+
+```{r}
+# Boxplot para Fare
+boxplot(data1$Fare_por_persona, col = "lightgreen")
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
